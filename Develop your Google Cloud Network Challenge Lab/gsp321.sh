@@ -185,6 +185,29 @@ kubectl create -f wp-service.yaml
 
 echo "${RED}${BOLD}Task 7. ${RESET}""${WHITE}${BOLD}Create a WordPress deployment${RESET}" "${GREEN}${BOLD}Completed${RESET}"
 
+echo "${RED}${BOLD}Task 8. ${RESET}""${WHITE}${BOLD}Create an uptime check for WordPress development site${RESET}"
+
+# Define variables
+UPTIME_CHECK_NAME="wordpress-uptime-check"
+WORDPRESS_IP=$(kubectl get svc wordpress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+UPTIME_CHECK_PATH="/"
+UPTIME_CHECK_PORT="80"
+UPTIME_CHECK_PROTOCOL="HTTP"
+
+# Create the uptime check
+gcloud monitoring uptime-checks create \
+    --display-name="$UPTIME_CHECK_NAME" \
+    --host="$WORDPRESS_IP" \
+    --path="$UPTIME_CHECK_PATH" \
+    --port="$UPTIME_CHECK_PORT" \
+    --http-check-use-ssl=$(if [ "$UPTIME_CHECK_PROTOCOL" == "HTTPS" ]; then echo "true"; else echo "false"; fi) \
+    --regions="global" \
+    --checker-interval=60s \
+    --timeout=10s
+
+echo "${GREEN}${BOLD}Uptime check created successfully for WordPress site at IP: $WORDPRESS_IP${RESET}"
+
+
 # Get the IAM policy JSON
 IAM_POLICY_JSON=$(gcloud projects get-iam-policy $DEVSHELL_PROJECT_ID --format=json)
 
